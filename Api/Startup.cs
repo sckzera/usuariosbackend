@@ -4,6 +4,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ namespace Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            
             services
                .AddControllers()
                .AddXmlDataContractSerializerFormatters()
@@ -68,7 +70,12 @@ namespace Api
                         Description = "Serviço criado para processos no sistema do COBRIC"
                     });
             });
-
+            services.AddCors(options =>{
+                    options.AddPolicy("foo", test => {
+                        test.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                    });
+                });
+            
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
              services.AddDbContext<UsuarioContext>(options =>
@@ -89,12 +96,15 @@ namespace Api
 
             app.UseRouting();
 
+            app.UseCors("foo");
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+            
 
             app.UseSwagger();
 

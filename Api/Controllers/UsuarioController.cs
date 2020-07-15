@@ -14,6 +14,7 @@ namespace usuarios_backend.Api.Controllers
 {
     [ApiController]
     [Route("usuarios")]
+
     public class UsuarioController : ControllerBase
     {
         private const string _mensagemErroExcecao = "Ocorreu um erro inesperado";
