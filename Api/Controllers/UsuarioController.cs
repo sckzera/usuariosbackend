@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Json;
+using System.Text;
 using AutoMapper;
 using cobric_backend.Api.Enums;
 using Microsoft.AspNetCore.Cors;
@@ -44,6 +47,7 @@ namespace usuarios_backend.Api.Controllers
         /// <response code="409">Retorna quando o recurso ja existe</response>
         /// <response code="500">Retorna quando houve um erro interno do serviço</response>
         [HttpPost]
+        [Route("cadastro")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErroRetorno))]
         [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErroRetorno))]
@@ -96,6 +100,46 @@ namespace usuarios_backend.Api.Controllers
                 }
 
                 return new JsonResult(500, new ErroRetorno(_mensagemErroExcecao));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(_mensagemErroExcecao, ex);
+                return new JsonResult(500, new ErroRetorno(_mensagemErroExcecao));
+            }
+        }
+
+         /// <summary>
+        /// Cria um novo usuario
+        /// </summary>
+        /// <response code="201">Retorna quando um recurso foi criado com sucesso</response>
+        /// <response code="400">Retorna quando houve uma requisição mal formada</response>
+        /// <response code="409">Retorna quando o recurso ja existe</response>
+        /// <response code="500">Retorna quando houve um erro interno do serviço</response>
+        [HttpPost]
+        [Route("login")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErroRetorno))]
+        [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErroRetorno))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErroRetorno))]
+        [Produces("application/json")]
+        public IActionResult Login([FromBody] UsuariosLogin usuario)
+        {
+            try
+            {
+
+                if (!ModelState.IsValid)
+                {
+                    return new BadRequestObjectResult(new ErroRetorno(string.Join(", ", ModelState.Values
+                                        .SelectMany(x => x.Errors)
+                                        .Select(x => x.ErrorMessage))));
+                }
+
+                var retornaUsuario = _repository.Login(usuario.senha, usuario.email);
+
+                if(retornaUsuario == null)
+                     return new BadRequestObjectResult(new ErroRetorno("Senha ou email estão vazios ou são inválidos "));
+
+                return new OkObjectResult(retornaUsuario);
             }
             catch (Exception ex)
             {

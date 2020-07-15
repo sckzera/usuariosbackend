@@ -15,6 +15,7 @@ namespace usuarios_backend.Api.Repositories
         bool Existe(Guid codigo);
         bool ExisteCadastro(string email, string ra, string telefone);
         string CalculaHash(string senha);
-        bool ExisteSenha(string senha);
+        Usuarios ExisteSenhaEmail(string senha, string email);
+        Usuarios Login(string senha, string email);
     }
 }

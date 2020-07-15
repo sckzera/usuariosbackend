@@ -99,15 +99,17 @@ namespace usuarios_backend.Api.Repositories
             return true;
         }
 
-        public bool ExisteSenha(string senha){
+        public Usuarios ExisteSenhaEmail(string senha, string email){
+
             var retorno = CalculaHash(senha);
 
-            var validacao = _context.Usuarios.Where( s => s.senha == retorno);
+            var validacao = _context.Usuarios.Where( s => s.senha == retorno
+            && s.email == email);
 
             if(validacao.Count() == 0)
-                return false;
+                return null;
 
-            return true;
+            return validacao.FirstOrDefault();
         }
 
         public string CalculaHash(string senha)
@@ -128,6 +130,19 @@ namespace usuarios_backend.Api.Repositories
             {
                 return null; // Caso encontre erro retorna nulo
             }
+        }
+
+        public Usuarios Login(string senha, string email)
+        {
+            if(String.IsNullOrEmpty(email) && String.IsNullOrEmpty(senha))
+                return null;
+ 
+            var retorno = ExisteSenhaEmail(senha, email);
+
+            if(retorno == null)
+                return retorno;
+
+            return retorno;
         }
     }
 }
