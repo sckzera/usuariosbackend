@@ -80,7 +80,7 @@ namespace Api
 
              services.AddDbContext<UsuarioContext>(options =>
             {
-              options.UseNpgsql("User ID=sadbcobric@dbcobric ;Password=147258369Co#;Server=dbcobric.postgres.database.azure.com;Port=5432;Database=dbcobric; Integrated Security=true;Pooling=true;");
+              options.UseNpgsql("User ID=sadbcobric@dbcobric2;Password=147258369Co#;Server=dbcobric2.postgres.database.azure.com;Port=5432;Database=dbcobric; Integrated Security=true;Pooling=true;");
             });
         }
 

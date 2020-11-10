@@ -112,21 +112,45 @@ namespace usuarios_backend.Api.Repositories
             return validacao.FirstOrDefault();
         }
 
+          public Usuarios ExisteSenhaEmailDecrypt(string senha, string email){
+
+            var validacao = _context.Usuarios.Where( s => s.email.Contains(email)).Single();
+          
+            if(validacao == null)
+                  return null;
+
+            var retorno = DecryptHash(validacao.senha);
+
+            if(!senha.Equals(retorno)){
+                return null;
+            }
+
+            return validacao;
+        }
+
         public string CalculaHash(string senha)
         {
             try
             {
-                System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create();
-                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(senha);
-                byte[] hash = md5.ComputeHash(inputBytes);
-                System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                for (int i = 0; i < hash.Length; i++)
-                {
-                    sb.Append(hash[i].ToString("X2"));
-                }
-                return sb.ToString(); // Retorna senha criptografada 
+               string passcode = "240"; 
+               string senha2 = EncryptStringSample.StringCipher.Encrypt(senha, passcode);
+               return senha2;
             }
-            catch (Exception)
+            catch (Exception err)
+            {
+                return null; // Caso encontre erro retorna nulo
+            }
+        }
+
+         public string DecryptHash(string senha)
+        {
+            try
+            {
+               string passcode = "240"; 
+               string senha2 = EncryptStringSample.StringCipher.Decrypt(senha, passcode);
+               return senha2;
+            }
+            catch (Exception err)
             {
                 return null; // Caso encontre erro retorna nulo
             }
@@ -137,7 +161,7 @@ namespace usuarios_backend.Api.Repositories
             if(String.IsNullOrEmpty(email) && String.IsNullOrEmpty(senha))
                 return null;
  
-            var retorno = ExisteSenhaEmail(senha, email);
+            var retorno = ExisteSenhaEmailDecrypt(senha, email);
 
             if(retorno == null)
                 return retorno;

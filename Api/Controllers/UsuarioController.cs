@@ -147,5 +147,6 @@ namespace usuarios_backend.Api.Controllers
                 return new JsonResult(500, new ErroRetorno(_mensagemErroExcecao));
             }
         }
+    
     }
 }
