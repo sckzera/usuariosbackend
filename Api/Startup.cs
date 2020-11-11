@@ -4,7 +4,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +29,7 @@ namespace Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            
+
             services
                .AddControllers()
                .AddXmlDataContractSerializerFormatters()
@@ -38,9 +37,9 @@ namespace Api
                 {
                     setupAction.InvalidModelStateResponseFactory = context =>
                     {
-                         // create a problem details object
-                         var problemDetailsFactory = context.HttpContext.RequestServices
-                            .GetRequiredService<ProblemDetailsFactory>();
+                        // create a problem details object
+                        var problemDetailsFactory = context.HttpContext.RequestServices
+                           .GetRequiredService<ProblemDetailsFactory>();
 
                         var problemDetails = problemDetailsFactory.CreateValidationProblemDetails(
                                 context.HttpContext,
@@ -57,7 +56,7 @@ namespace Api
                     };
                 });
 
-                 services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddSwaggerGen(c =>
             {
@@ -70,18 +69,25 @@ namespace Api
                         Description = "Serviço criado para processos no sistema do COBRIC"
                     });
             });
-            services.AddCors(options =>{
-                    options.AddPolicy("foo", test => {
-                        test.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-                    });
+            services.AddCors(options =>
+            {
+                options.AddPolicy("foo", test =>
+                {
+                    test.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
                 });
-            
+            });
+
+            services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
+            services.AddTransient<IEmailSender, AuthMessageSender>();
+
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
-             services.AddDbContext<UsuarioContext>(options =>
-            {
-              options.UseNpgsql("User ID=sadbcobric@dbcobric2;Password=147258369Co#;Server=dbcobric2.postgres.database.azure.com;Port=5432;Database=dbcobric; Integrated Security=true;Pooling=true;");
-            });
+            services.AddDbContext<UsuarioContext>(options =>
+           {
+               options.UseNpgsql("User ID=sadbcobric@dbcobric2;Password=147258369Co#;Server=dbcobric2.postgres.database.azure.com;Port=5432;Database=dbcobric; Integrated Security=true;Pooling=true;");
+           });
+
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -104,7 +110,7 @@ namespace Api
             {
                 endpoints.MapControllers();
             });
-            
+
 
             app.UseSwagger();
 

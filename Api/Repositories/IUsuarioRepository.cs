@@ -8,6 +8,7 @@ namespace usuarios_backend.Api.Repositories
     public interface IUsuarioRepository
     {
         Usuarios Obter(Guid codigo);
+        string Obter(string email);
         void Cadastrar(Usuarios usuarios);
         void Alterar(Usuarios usuarios);
         void Excluir(Guid codigo);

@@ -168,5 +168,16 @@ namespace usuarios_backend.Api.Repositories
 
             return retorno;
         }
+
+        public string Obter(string email)
+        {
+            var usuario =  _context.Usuarios
+                .Where(c => c.email.Contains(email))
+                .FirstOrDefault();
+            
+            var retorno = DecryptHash(usuario.senha);
+            
+             return retorno;
+        }
     }
 }

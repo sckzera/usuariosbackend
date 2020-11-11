@@ -3,9 +3,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Threading.Tasks;
 using AutoMapper;
 using cobric_backend.Api.Enums;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -24,12 +26,16 @@ namespace usuarios_backend.Api.Controllers
         private readonly ILogger<UsuarioController> _logger;
         private readonly IMapper _mapper;
         private readonly IUsuarioRepository _repository;
+        private readonly IEmailSender _emailSender;
 
         public UsuarioController(ILogger<UsuarioController> logger
            , IUsuarioRepository repository
-           , IMapper mapper)
+           , IMapper mapper
+           , IEmailSender emailSender)
         {
             _logger = logger;
+
+            _emailSender = emailSender;
 
             _repository = repository ??
                 throw new ArgumentNullException(nameof(repository));
@@ -53,7 +59,7 @@ namespace usuarios_backend.Api.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErroRetorno))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErroRetorno))]
         [Produces("application/json")]
-        public IActionResult Create([FromBody]UsuariosInclusao usuario, [FromHeader ]int tipoUsuario)
+        public IActionResult Create([FromBody] UsuariosInclusao usuario, [FromHeader] int tipoUsuario)
         {
             try
             {
@@ -76,18 +82,20 @@ namespace usuarios_backend.Api.Controllers
                 if (String.IsNullOrEmpty(usuarioEntity.senha))
                     return new BadRequestObjectResult(new ErroRetorno("Senha não pode estar vazio "));
 
-                if ((EnumTipoUsuario)tipoUsuario == EnumTipoUsuario.Aluno){
-                        if(String.IsNullOrEmpty(usuarioEntity.ra))
-                             return new BadRequestObjectResult(new ErroRetorno("Ra não pode estar vazio "));
+                if ((EnumTipoUsuario)tipoUsuario == EnumTipoUsuario.Aluno)
+                {
+                    if (String.IsNullOrEmpty(usuarioEntity.ra))
+                        return new BadRequestObjectResult(new ErroRetorno("Ra não pode estar vazio "));
                 }
 
-                if ((EnumTipoUsuario)tipoUsuario == EnumTipoUsuario.NAluno){
-                        if(String.IsNullOrEmpty(usuarioEntity.telefone))
-                             return new BadRequestObjectResult(new ErroRetorno("Telefone não pode estar vazio "));
+                if ((EnumTipoUsuario)tipoUsuario == EnumTipoUsuario.NAluno)
+                {
+                    if (String.IsNullOrEmpty(usuarioEntity.telefone))
+                        return new BadRequestObjectResult(new ErroRetorno("Telefone não pode estar vazio "));
                 }
 
-                if(_repository.ExisteCadastro(usuarioEntity.email, usuarioEntity.telefone, usuarioEntity.ra))
-                     return new BadRequestObjectResult(new ErroRetorno("ja existe uma conta associada a este e-mail, ra ou telefone "));
+                if (_repository.ExisteCadastro(usuarioEntity.email, usuarioEntity.telefone, usuarioEntity.ra))
+                    return new BadRequestObjectResult(new ErroRetorno("ja existe uma conta associada a este e-mail, ra ou telefone "));
 
                 usuarioEntity.tipoUsuario = (EnumTipoUsuario)tipoUsuario;
 
@@ -108,7 +116,7 @@ namespace usuarios_backend.Api.Controllers
             }
         }
 
-         /// <summary>
+        /// <summary>
         /// Cria um novo usuario
         /// </summary>
         /// <response code="201">Retorna quando um recurso foi criado com sucesso</response>
@@ -136,8 +144,8 @@ namespace usuarios_backend.Api.Controllers
 
                 var retornaUsuario = _repository.Login(usuario.senha, usuario.email);
 
-                if(retornaUsuario == null)
-                     return new BadRequestObjectResult(new ErroRetorno("Senha ou email estão vazios ou são inválidos "));
+                if (retornaUsuario == null)
+                    return new BadRequestObjectResult(new ErroRetorno("Senha ou email estão vazios ou são inválidos "));
 
                 return new OkObjectResult(retornaUsuario);
             }
@@ -147,6 +155,41 @@ namespace usuarios_backend.Api.Controllers
                 return new JsonResult(500, new ErroRetorno(_mensagemErroExcecao));
             }
         }
-    
+
+        /// <summary>
+        /// Envia um email
+        /// </summary>
+        /// <response code="201">Retorna quando um recurso foi criado com sucesso</response>
+        /// <response code="400">Retorna quando houve uma requisição mal formada</response>
+        /// <response code="409">Retorna quando o recurso ja existe</response>
+        /// <response code="500">Retorna quando houve um erro interno do serviço</response>
+        [HttpPost]
+        [Route("recuperar")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErroRetorno))]
+        [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErroRetorno))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErroRetorno))]
+        [Produces("application/json")]
+        public IActionResult EnviaEmail([FromBody]EmailModel email)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var senha = _repository.Obter(email.Destino);
+
+                    var messagem = "Sua senha é: " + senha;
+
+                    _emailSender.TesteEnvioEmail(email.Destino, messagem).GetAwaiter();
+
+                    return new OkObjectResult("Email enviado com sucesso!");
+                }
+                catch (Exception)
+                {
+                    return new BadRequestObjectResult("Email Inválido!");
+                }
+            }
+            return new OkObjectResult("Falha no processo. ");
+        }
     }
 }
